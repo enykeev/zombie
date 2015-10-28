@@ -153,14 +153,10 @@ describe('History', function() {
 
         before(function(done) {
           window.document.magic = 123;
-
-          function onPopstate(event) {
-            window.removeEventListener('popstate', onPopstate);
+          window.addEventListener('popstate', function(event) {
             lastEvent = event;
             done();
-          }
-
-          window.addEventListener('popstate', onPopstate);
+          });
           window.history.back();
           browser.wait().done();
         });
@@ -181,22 +177,18 @@ describe('History', function() {
 
       describe('go forwards', function() {
         let lastEvent;
+        let cb;
 
         before(async function(done) {
           await browser.visit('/');
           browser.history.pushState({ is: 'first' }, null, '/first');
           browser.history.pushState({ is: 'second' },   null, '/second');
           browser.back();
-          await browser.wait();
-
-          function onPopstate(event) {
+          browser.window.addEventListener('popstate', cb = function(event) {
             lastEvent = event;
-            done();
-          }
-
-          browser.window.addEventListener('popstate', onPopstate);
+          });
           browser.history.forward();
-          await browser.wait();
+          browser.wait().done(done);
         });
 
         it('should fire popstate event', function() {
@@ -204,6 +196,10 @@ describe('History', function() {
         });
         it('should include state', function() {
           assert.equal(lastEvent.state.is, 'second');
+        });
+
+        after(function () {
+          browser.window.removeEventListener('popstate', cb);
         });
       });
 
