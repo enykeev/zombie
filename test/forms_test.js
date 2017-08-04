@@ -373,11 +373,13 @@ describe('Forms', function() {
     let changed = null;
     let clicked = null;
 
+    let cb;
+
     before(async function() {
       await browser.visit('/forms/form');
 
-      browser.on('event', function(event, target) {
-        switch(event._type) {
+      browser.on('event', cb = function(event, target) {
+        switch(event.type) {
           case 'change': {
             changed = target;
             break;
@@ -493,6 +495,10 @@ describe('Forms', function() {
         assert(true);
       });
     });
+
+    after(function() {
+      browser.removeListener('event', cb);
+    })
   });
 
 
